@@ -1,5 +1,5 @@
 from machine import Pin, ADC
-from time import time, sleep
+from time import sleep
 import ujson
 
 def sub_cb(topic, msg):
@@ -42,23 +42,23 @@ pin = 2
 led = Pin(pin, Pin.OUT) #2 is the internal LED
 outgoingD = {}
 incomingD = {}
-incomingD["onoff"] = 0
 newmsg = True
 while True:
     try:
       client.check_msg()
       if newmsg:                              # INCOMING: New msg/instructions received
-        if incomingD["onoff"] == 1:            
-          led.value(1)                                    # Turn on LED (set it to 1)
-          outgoingD[str(pin) + 'i'] = 1                   # The i tells node-red an integer is being sent. Will see the check in the node-red MQTT parse function.
-        elif incomingD["onoff"] == 0:          
-          led.value(0)                                    # Turn off LED (set it to 0)
-          outgoingD[str(pin) + 'i'] = 0                   # The i tells node-red an integer is being sent. Will see the check in the node-red MQTT parse function.
-        else:
-          outgoingD[str(pin) + 'i'] = 99                  # Update LED status to 99 for unknown
-                                              # OUTGOING: Convert python dictionary to json and publish
-        client.publish(MQTT_PUB_TOPIC1, ujson.dumps(outgoingD))
-        newmsg = False                                     # Reset newmsg flag
+        for key, value in incomingD.items():
+            direction = key
+            angle = value
+            if direction == 'horiz':
+                kit.servo[0].angle = angle            # Drive servo on channel 0
+                sleep(0.1)           
+            elif direction == 'vert':
+                kit.servo[1].angle = angle     # Drive servo on channel 1
+                sleep(0.1)
+            outgoingD[direction + 'i'] = angle                
+            mqtt_client.publish(MQTT_PUB_TOPIC1, json.dumps(outgoingD))
+        newmsg = False          
         #Uncomment prints for debugging. Will unpack the dictionary and then the converted JSON payload
         #print("Publish: Unpack outgoing dictionary (Will convert dictionary->JSON)")
         #for key, value in outgoingD.items():
