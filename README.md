@@ -125,6 +125,7 @@ esp32
 [Link to MQTT-Node-Red Setup](https://stemjust4u.com/mqtt-influxdb-nodered-grafana)  
 ![Node red](images/nodered-servo-gui.gif#5rad)
 ![Node red](images/node-red-Pi0.png)
+The esp32 takes a duty value for input so a degree-to-duty conversion is made before publishing.
 ![Node red](images/node-red-esp32.png)
 
 The node-red flows can be found at the bottom of the project web site and imported 
