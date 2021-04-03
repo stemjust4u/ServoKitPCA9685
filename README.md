@@ -1,9 +1,9 @@
 <link rel="stylesheet" href="./images/sj4u.css"></link>
 
 # [STEM Just 4 U Home Page](https://stemjust4u.com/)
-## This project connects a small SG90 servo with both the esp32 and a Pi0 (using the PCA9685 16-Channel 12-bit PWM Servo Driver and I2C interface). 
+## This project connects a small SG90 servo with both the esp32 and a Pi0 
 
-The esp32 will use its built-in PWM to control the servo. It is also possible to use the Pi0's PWM pins to control the servo but there will likely be significant jitter. I had to use the PCA9685 servo driver on the Pi0 setup to make it useable. To communicate instructions, servo angle, to the Pi0/esp32 we will use mqtt/node-red.
+The Pi0 setup will include a PCA9685 16-Channel 12-bit PWM Servo Driver and I2C interface. The esp32 will use its built-in PWM to control the servo. It's possible to use the Pi0's PWM pins to control the servo but there will likely be significant jitter. I had to use the PCA9685 servo driver on the Pi0 setup to make it useable. To communicate instructions, servo angle, to the Pi0/esp32 we will use mqtt/node-red.
 
 [Link to MQTT Project Web Site](https://stemjust4u.com/ServoKitPCA9685)  
 
@@ -33,12 +33,11 @@ Once the PCA9685 is connected you can confirm the address is 0x40 (assuming addr
 * Stall torque: 1.8 kgf·cm (x 13.88 for oz-in)
 * Operating speed: 0.1 s/60 degree
 * Operating voltage: 4.8 V (~5V)
-* Dead band width: 10 μs  
+
+>Torque is a measure of how much force the servo arm can apply at a distance from the servo shaft. So 13.88 oz-in of torque translates to a little under a 1lb of force 1in from the shaft. (or 7oz of force 2in from the shaft, etc)
 
 Power usage
 * I saw spikes of 2-2.5W when the servo was turning a long distance. For normal stepping movement it used 0.5W. While idle it was less than 0.05Watts 
-
->Torque is a measure of how much force the servo arm can apply at a distance from the servo shaft. So 13.88 oz-in of torque translates to a little under a 1lb of force 1in from the shaft. (or 7oz of force 2in from the shaft, etc)
 
 # Servo Control with PWM
 
