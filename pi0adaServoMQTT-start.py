@@ -8,7 +8,6 @@ from time import sleep
 import sys, re, logging, json
 from os import path
 from pathlib import Path
-from typing import NamedTuple
 import paho.mqtt.client as mqtt
 
 logging.basicConfig(level=logging.DEBUG)
