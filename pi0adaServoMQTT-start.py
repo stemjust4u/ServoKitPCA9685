@@ -13,12 +13,6 @@ import paho.mqtt.client as mqtt
 
 logging.basicConfig(level=logging.DEBUG)
 
-class ServoObj(NamedTuple):
-    location: str
-    device: str
-    orientation: str
-    value: float
-
 kit = ServoKit(channels=16)                   # Create servo kit object. Set channels to the number of servo channels on your kit.
                                               # PCA9685 has 16 channels
 
