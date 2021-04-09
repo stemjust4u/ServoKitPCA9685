@@ -127,5 +127,5 @@ esp32
 The esp32 takes a duty value for input so a degree-to-duty conversion is made before publishing.
 ![Node red](images/node-red-esp32.png)
 
-The node-red flows can be found at the bottom of the project web site and imported   
+The node-red flows can be found in github node-red folder or at the bottom of the project web site (import to node red from clipboard)   
 [Link to MQTT Project Web Site](https://stemjust4u.com/ServoKitPCA9685) 
