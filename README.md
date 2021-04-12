@@ -21,8 +21,10 @@ The Pi0 setup will include a PCA9685 16-Channel 12-bit PWM Servo Driver and I2C 
 In raspi-config make sure i2c is enabled (in the interface menu)  
 `$ sudo apt install python-smbus`  
 `$ sudo apt install i2c-tools`  
+
 Once the PCA9685 is connected you can confirm the address is 0x40 (assuming address has not been changed) at port 1 with i2cdetect command (searches /dev/i2c-1)  
 `$ sudo i2cdetect -y 1`  
+
 ​Python packages are in requirements on github and include: setuptools, adafruit-blinka, adafruit-circuitpython-servokit, paho-mqtt
 
 >Servos are low-speed, high-torque motors. Most standard servos have a limited rotation, for example 90, 180 or 270 degrees (continuous servos can rotate a complete 360). Servos are useful for positioning a device like a camera or solar panel. The SG90 I'm working with has a range of ~180 degrees. This needs to be taken into consideration in your node-red dashboard so you don't try and move the servo outside its range.
@@ -113,11 +115,27 @@ On my SG90 the range was 0- 180 degrees but your servo may differ.
 Code can be downloaded from github
 $ git clone https://github.com/stemjust4u/ServoKitPCA9685​
 
-Pi0(PCA9685)
-/pi0adaServoMQTT-forever.py (uses the mqtt loop_forever)
+### __Pi0(PCA9685)__  
+/pi0adaServoMQTT-forever.py (uses the mqtt loop_forever)  
 /pi0adaServoMQTT-start.py (uses the mqtt loop_start)
 
-esp32
+Code Sections
+1. MQTT functions defined (along with other functions required)
+2. Logging/debugging control set with level
+    * DEBUG (variables+status prints)
+    * INFO (status prints)
+    * CRITICAL (prints turned off)
+3. Hardware Setup (set pins, create objects for external hardware)
+4. MQTT setup (get server info align topics to match node-red)
+    * SUBSCRIBE TOPIC
+    * PUBLISH TOPIC
+5. Start/bind MQTT functions
+6. Enter main loop
+    * Receive msg/instructions (subscribed) from node-red via mqtt broker/server
+    * Perform actions
+    * Publish status/instructions to node-red via mqtt broker/server
+
+### __esp32__  
 /upython/main.py (and boot, umqttsimple files)
 
 # Node Red
