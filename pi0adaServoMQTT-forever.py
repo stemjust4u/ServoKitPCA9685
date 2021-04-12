@@ -88,7 +88,7 @@ def _parse_mqtt_message(topic, payload):
         return None
 
 def on_publish(client, userdata, mid):
-    """on publish will send data to client"""
+    """on publish will send data to broker"""
     pass  # DO NOT COMMENT OUT
 
 #==== start/bind mqtt functions ===========#
