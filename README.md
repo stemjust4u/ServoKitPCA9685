@@ -127,7 +127,9 @@ $ git clone https://github.com/stemjust4u/ServoKitPCA9685​
     * CRITICAL (prints turned off)
 3. Hardware Setup (set pins, create objects for external hardware)
 4. MQTT setup (get server info align topics to match node-red)
-    * SUBSCRIBE TOPIC
+    * SUBSCRIBE TOPIC   
+    __Servo Instructions received from node red on 
+MQTT_SUB_TOPIC1 = 'device/servo'__
     * PUBLISH TOPIC
 5. Start/bind MQTT functions
 6. Enter main loop
