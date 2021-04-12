@@ -119,7 +119,7 @@ $ git clone https://github.com/stemjust4u/ServoKitPCA9685​
 /pi0adaServoMQTT-forever.py (uses the mqtt loop_forever)  
 /pi0adaServoMQTT-start.py (uses the mqtt loop_start)
 
-Code Sections
+## Code Sections
 1. MQTT functions defined (along with other functions required)
 2. Logging/debugging control set with level
     * DEBUG (variables+status prints)
