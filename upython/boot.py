@@ -24,8 +24,8 @@ MQTT_CLIENT_ID = ubinascii.hexlify(machine.unique_id())
 WIFI_SSID = stem[2]
 WIFI_PASSWORD = stem[3]
 
-p5 = machine.Pin(5)
-p4 = machine.Pin(4)
+p5 = machine.Pin(19)
+p4 = machine.Pin(21)
 servoV = machine.PWM(p4,freq=50)
 servoH = machine.PWM(p5,freq=50)
 # initialize to neutral position
