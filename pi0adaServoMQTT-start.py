@@ -15,14 +15,41 @@ import paho.mqtt.client as mqtt
 
 if __name__ == "__main__":
 
+    #==== LOGGING/DEBUGGING SETUP ============#
+
+    def setup_logging(log_dir):
+        # Create loggers
+        main_logger = logging.getLogger(__name__)
+        main_logger.setLevel(logging.INFO)
+        log_file_format = logging.Formatter("[%(levelname)s] - %(asctime)s - %(name)s - : %(message)s in %(pathname)s:%(lineno)d")
+        log_console_format = logging.Formatter("[%(levelname)s]: %(message)s")
+
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_handler.setFormatter(log_console_format)
+
+        exp_file_handler = RotatingFileHandler('{}/exp_debug.log'.format(log_dir), maxBytes=10**6, backupCount=5) # 1MB file
+        exp_file_handler.setLevel(logging.INFO)
+        exp_file_handler.setFormatter(log_file_format)
+
+        exp_errors_file_handler = RotatingFileHandler('{}/exp_error.log'.format(log_dir), maxBytes=10**6, backupCount=5)
+        exp_errors_file_handler.setLevel(logging.WARNING)
+        exp_errors_file_handler.setFormatter(log_file_format)
+
+        main_logger.addHandler(console_handler)
+        main_logger.addHandler(exp_file_handler)
+        main_logger.addHandler(exp_errors_file_handler)
+        return main_logger
+    
     def on_connect(client, userdata, flags, rc):
         """ on connect callback verifies a connection established and subscribe to TOPICs"""
         logging.info("attempting on_connect")
         if rc==0:
-            mqtt_client.connected = True          # If rc = 0 then successful connection
-            client.subscribe(MQTT_SUB_TOPIC1)      # Subscribe to topic
+            mqtt_client.connected = True
+            for topic in MQTT_SUB_TOPIC:
+                client.subscribe(topic)
+                logging.info("Subscribed to: {0}\n".format(topic))
             logging.info("Successful Connection: {0}".format(str(rc)))
-            logging.info("Subscribed to: {0}\n".format(MQTT_SUB_TOPIC1))
         else:
             mqtt_client.failed_connection = True  # If rc != 0 then failed to connect. Set flag to stop mqtt loop
             logging.info("Unsuccessful Connection - Code {0}".format(str(rc)))
@@ -53,22 +80,25 @@ if __name__ == "__main__":
         logging.debug("DisConnected result code "+str(rc))
         mqtt_client.loop_stop()
 
-    def get_login_info(file):
-        ''' Import mqtt and wifi info. Remove if hard coding in python file '''
-        home = str(Path.home())                    # Import mqtt and wifi info. Remove if hard coding in python script
-        with open(path.join(home, file),"r") as f:
-            user_info = f.read().splitlines()
-        return user_info
-
     #==== LOGGING/DEBUGGING ============#
-    logging.basicConfig(level=logging.DEBUG) # Set to CRITICAL to turn logging off. Set to DEBUG to get variables. Set to INFO for status messages.
+    # Can comment/uncomment to switch between the two methods of logging
+    #basicConfig root logger
+    logging.basicConfig(level=logging.DEBUG)                      # Can comment/uncomment to switch
+    logging.info("Setup with basicConfig root logger")
+
+    # getLogger (includes file logging)
+    #logging = setup_logging(path.dirname(path.abspath(__file__)))  # Can comment/uncomment to switch
+    #logging.info("Setup with getLogger console/file logging module") 
 
     #==== HARDWARE SETUP ===============# 
     kit = ServoKit(channels=16)                   # Create servo kit object. Set channels to the number of servo channels on your kit.
                                                 # PCA9685 has 16 channels
 
-    #====   SETUP MQTT =================#
-    user_info = get_login_info("stem")
+    #=======   MQTT SETUP ==============#    
+    home = str(Path.home())                       # Import mqtt and wifi info. Remove if hard coding in python script
+    with open(path.join(home, "stem"),"r") as f:
+        user_info = f.read().splitlines()
+
     MQTT_SERVER = '10.0.0.115'                    # Replace with IP address of device running mqtt server/broker
     MQTT_USER = user_info[0]                      # Replace with your mqtt user ID
     MQTT_PASSWORD = user_info[1]                  # Replace with your mqtt password
