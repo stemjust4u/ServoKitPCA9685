@@ -44,9 +44,11 @@ Power usage
 # Servo Control with PWM
 
 The SG90 will have 3 connections
-1. Vcc (5V) - usually red -  **Use a separate power supply for the servo**
+1. Vcc(5V) - usually red -  **Use a separate power supply for the servo**
 2. GND - usually brown/black - **Make sure the ground of the servo, power supply, Pi/esp32 are connected or common.**
-3. PWM signal (50Hz) control - usually white, yellow, or orange.
+3. PWM signal (50Hz) control - usually white, yellow, or orange. For esp32 this will go to the GPIO pin. You will set the pin up as PWM and send it various duty cycles (~5-10%) to control it at a 50Hz frequency.  
+
+The Pi with PCA9685 is slightly easier hookup for SG90. There is a header on the PCA9685 that you will connect each SG90 servo to.
 
 ![Servos](images/SG90.png#200x-150y-5rad)
 
@@ -88,7 +90,7 @@ The PCA9685 was powered by a 5V li-ion battery and the SG90 cable was connected 
 
 ## Connecting the PCA9685 to the Pi0.  
 The PCA9685 uses the I2C interface. 
-* Vcc=5V
+* Vcc(logic level) = 3.3V for Pi
 * GRND=GRND
 * SDA=GPIO2
 * SCL=GPIO3

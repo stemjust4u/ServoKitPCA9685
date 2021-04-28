@@ -59,20 +59,6 @@ def mqtt_on_message(topic, msg):
         if incomingID[1] == b'servoZCMD':
             mqtt_servoID = int(incomingID[2])
             mqtt_servo_duty = int(incomingD)
-        # Will print the JSON incoming payload and unpack it for debugging
-        if debugmqtt:
-            incomingPayload = ujson.loads(msg.decode("utf-8", "ignore"))
-            print("Incoming JSON payload: {0}".format(incomingPayload))
-            if isinstance(incomingPayload, (str, bool, int, float)):
-                print('Incoming item:{0}'.format(incomingPayload))
-            elif isinstance(incomingPayload, list):
-                print('Incoming list')
-                for item in incomingPayload:
-                    print(item)
-            elif isinstance(incomingPayload, dict):
-                print('Incoming dict')
-                for key, value in incomingPayload.items():  
-                    print("{0}:{1}".format(key, value))
 
 def mqtt_reset():
     print('Failed to connect to MQTT broker. Reconnecting...')
@@ -92,7 +78,7 @@ def create_servo(pinlist):
     freq=50       # higher freq has lower duty resolution. esp32 can go from 1-40000 (40MHz crystal oscillator) 
     neutral = 75  # initialize to neutral position, 75=1.5mSec at 50Hz. (75/50=1.5ms or 1.5ms/20ms period = 7.5% duty cycle)
     for i, pin in enumerate(pinlist):
-        servoArr.append(PWM(Pin(pin),freq=50))
+        servoArr.append(PWM(Pin(pin),freq))
         servoArr[i].duty(neutral)
         pinsummary.append(pin)
     if setupinfo: print('Servo:{0}'.format(servoArr))
@@ -140,7 +126,6 @@ def main():
     mqtt_client.publish(b'status'.join(MQTT_PUB_TOPIC), b'esp32 connected, entering main loop')
     # Initialize flags and timers
     checkmsgs = False
-    sendmsgs = False    
     t0onmsg_ms = utime.ticks_ms()
     
     while True:
@@ -149,14 +134,11 @@ def main():
                 checkmsgs = True
                 t0onmsg_ms = utime.ticks_ms()
             
-            servo[mqtt_servoID].duty(mqtt_servo_duty) # Servo commands sent one-at-a-time
+            servo[mqtt_servoID].duty(mqtt_servo_duty) # Servo commands
             
             if checkmsgs:
                 mqtt_client.check_msg()
                 checkmsgs = False
-                
-            if sendmsgs: # Place holder. Servo does not send any messages to nodered
-                sendmsgs = False
                 
         except OSError as e:
             mqtt_reset()
