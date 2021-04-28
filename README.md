@@ -7,6 +7,7 @@ The Pi0 setup will include a PCA9685 16-Channel 12-bit PWM Servo Driver and I2C 
 
 [Link to MQTT Project Web Site](https://stemjust4u.com/ServoKitPCA9685)  
 
+![Servos](images/pca9685-fritzing.png#200x-150y-5rad)
 ![Servos](images/RPi-servo.png#200x-150y-5rad)
 ![Servos](images/esp32-servo.png#200x-150y-5rad)
 
