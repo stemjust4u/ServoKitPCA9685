@@ -5,6 +5,17 @@ import gc
 gc.collect()
 micropython.alloc_emergency_exception_buf(100)
 
+'''
+ulogging from https://github.com/peterhinch
+CRITICAL = 50
+ERROR    = 40
+WARNING  = 30
+INFO     = 20
+DEBUG    = 10
+NOTSET   = 0
+'''
+ulogging.basicConfig(level=20)
+
 def connect_wifi(WIFI_SSID, WIFI_PASSWORD):
     station = network.WLAN(network.STA_IF)
 
@@ -53,7 +64,7 @@ def mqtt_connect_subscribe():
 def mqtt_on_message(topic, msg):
     global MQTT_REGEX, deviceD           # Standard variables for mqtt projects
     global mqtt_servo_duty, mqtt_servoID # Specific for servo
-    ulogging.debug("Received topic(tag): {0}".format(topic))
+    ulogging.debug("Received topic(tag): {0} payload:{1}".format(topic, msg.decode("utf-8", "ignore")))
     msgmatch = re.match(MQTT_REGEX, topic)
     if msgmatch:
         mqtt_payload = ujson.loads(msg.decode("utf-8", "ignore")) # decode json data
@@ -71,25 +82,13 @@ def main():
     global pinsummary
     global mqtt_servoID, mqtt_servo_duty     # Servo variables used in mqtt on_message
     global deviceD                           # Containers setup in 'create' functions and used for Publishing mqtt
-    global MQTT_SERVER, MQTT_USER, MQTT_PASSWORD, MQTT_CLIENT_ID, mqtt_client, MQTT_PUB_TOPIC, ESPID, SUBLVL1
+    global MQTT_SERVER, MQTT_USER, MQTT_PASSWORD, MQTT_CLIENT_ID, mqtt_client, MQTT_PUB_TOPIC, SUBLVL1, ESPID
 
-    '''
-    ulogging from https://github.com/peterhinch
-    CRITICAL = 50
-    ERROR    = 40
-    WARNING  = 30
-    INFO     = 20
-    DEBUG    = 10
-    NOTSET   = 0
-    '''
-    ulogging.basicConfig(level=10)
-
+    # umqttsimple requires topics to be byte (b') format. For string.join to work on topics, all items must be the same, bytes.
+    ESPID = b'esp'  # Specific MQTT_PUB_TOPICS created at time of publishing using string.join (specifically lvl2.join)
     mqtt_setup('10.0.0.115')  # Setup mqtt variables (topics and data containers) used in on_message, main loop, and publishing
 
     deviceD = {}       # Primary container for storing all topics and data
-
-    # umqttsimple requires topics to be byte (b') format. For string.join to work on topics, all items must be the same, bytes.
-    ESPID = b'/esp32A'  # Specific MQTT_PUB_TOPICS created at time of publishing using string.join (specifically lvl2.join)
     
     pinsummary = []
     
@@ -100,9 +99,11 @@ def main():
     mqtt_servo_duty = 0  # container for mqtt servo duty
     freq=50       # higher freq has lower duty resolution. esp32 can go from 1-40000 (40MHz crystal oscillator) 
     neutral = 75  # initialize to neutral position, 75=1.5mSec at 50Hz. (75/50=1.5ms or 1.5ms/20ms period = 7.5% duty cycle)
+    deviceD['servoDuty'] = []
     for i, pin in enumerate(servopins):
         servo.append(PWM(Pin(pin),freq))
         servo[i].duty(neutral)
+        deviceD['servoDuty'].append(neutral)
         pinsummary.append(pin)
     ulogging.info('Servo:{0}'.format(servo))
 
@@ -130,7 +131,7 @@ def main():
                 mqtt_client.check_msg()
                 checkmsgs = False
                 
-            servo[mqtt_servoID].duty(mqtt_servo_duty) # Servo commands
+            servo[mqtt_servoID].duty(deviceD['servoDuty'][mqtt_servoID]) # Servo commands
 
         except OSError as e:
             mqtt_reset()
