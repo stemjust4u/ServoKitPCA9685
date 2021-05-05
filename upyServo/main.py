@@ -1,4 +1,4 @@
-import utime, ubinascii, micropython, network, re, ujson
+import utime, ubinascii, micropython, network, re, ujson, ulogging
 from lib.umqttsimple import MQTTClient
 from machine import Pin, PWM
 import gc
@@ -14,11 +14,11 @@ def connect_wifi(WIFI_SSID, WIFI_PASSWORD):
     while station.isconnected() == False:
         pass
 
-    print('Connection successful')
-    print(station.ifconfig())
+    ulogging.info('Connection successful')
+    ulogging.info(station.ifconfig())
 
 def mqtt_setup(IPaddress):
-    global MQTT_CLIENT_ID, MQTT_SERVER, MQTT_USER, MQTT_PASSWORD, MQTT_SUB_TOPIC, MQTT_REGEX
+    global MQTT_CLIENT_ID, MQTT_SERVER, MQTT_USER, MQTT_PASSWORD, MQTT_SUB_TOPIC, MQTT_REGEX, MQTT_PUB_TOPIC, SUBLVL1, ESPID
     with open("stem", "rb") as f:    # Remove and over-ride MQTT/WIFI login info below
       stem = f.read().splitlines()
     MQTT_SERVER = IPaddress   # Over ride with MQTT/WIFI info
@@ -28,6 +28,8 @@ def mqtt_setup(IPaddress):
     WIFI_PASSWORD = stem[3]
     MQTT_CLIENT_ID = ubinascii.hexlify(machine.unique_id())
     MQTT_SUB_TOPIC = []
+    SUBLVL1 = b'nred2' + ESPID  # Items that are sent as part of mqtt topic will be binary (b'item)
+    MQTT_PUB_TOPIC = [ESPID + b'2nred', ESPID]
     # Specific MQTT_SUB_TOPICS for ADC, servo, stepper are .appended below
     MQTT_REGEX = rb'nred2esp/([^/]+)/([^/]+)' # b'txt' is binary format. Required for umqttsimple to save memory
                                               # r'txt' is raw format for easier reg ex matching
@@ -42,80 +44,69 @@ def mqtt_connect_subscribe():
     client = MQTTClient(MQTT_CLIENT_ID, MQTT_SERVER, user=MQTT_USER, password=MQTT_PASSWORD)
     client.set_callback(mqtt_on_message)
     client.connect()
-    print('(CONNACK) Connected to {0} MQTT broker'.format(MQTT_SERVER))
+    ulogging.info('(CONNACK) Connected to {0} MQTT broker'.format(MQTT_SERVER))
     for topics in MQTT_SUB_TOPIC:
         client.subscribe(topics)
-        print('Subscribed to {0}'.format(topics)) 
+        ulogging.info('Subscribed to {0}'.format(topics)) 
     return client
 
 def mqtt_on_message(topic, msg):
-    global MQTT_REGEX, debugmqtt
-    global mqtt_servo_duty, mqtt_servoID
-    if debugmqtt: print("Received topic(tag): {0}".format(topic))
+    global MQTT_REGEX, deviceD           # Standard variables for mqtt projects
+    global mqtt_servo_duty, mqtt_servoID # Specific for servo
+    ulogging.debug("Received topic(tag): {0}".format(topic))
     msgmatch = re.match(MQTT_REGEX, topic)
     if msgmatch:
-        incomingD = ujson.loads(msg.decode("utf-8", "ignore")) # decode json data
-        incomingID = [msgmatch.group(0), msgmatch.group(1), msgmatch.group(2), type(incomingD)]
-        if incomingID[1] == b'servoZCMD':
-            mqtt_servoID = int(incomingID[2])
-            mqtt_servo_duty = int(incomingD)
+        mqtt_payload = ujson.loads(msg.decode("utf-8", "ignore")) # decode json data
+        mqtt_topic = [msgmatch.group(0), msgmatch.group(1), msgmatch.group(2), type(mqtt_payload)]
+        if mqtt_topic[1] == b'servoZCMD':
+            mqtt_servoID = int(mqtt_topic[2])
+            deviceD['servoDuty'][mqtt_servoID] = int(mqtt_payload)  # Set the servo duty from mqtt payload
 
 def mqtt_reset():
-    print('Failed to connect to MQTT broker. Reconnecting...')
+    ulogging.info('Failed to connect to MQTT broker. Reconnecting...')
     utime.sleep_ms(5000)
     machine.reset()
 
-def create_servo(pinlist):
-    global MQTT_SUB_TOPIC, device, outgoingD, mqtt_servoID, mqtt_servo_duty
-    MQTT_SUB_TOPIC.append(b'nred2esp/servoZCMD/+')
-    device.append(b'servo')
-    outgoingD[b'servo'] = {}
-    outgoingD[b'servo']['send'] = False    # Servo does not send any data to nodered
-    mqtt_servoID = 0
-    mqtt_servo_duty = 0
-    servoArr = []
-    setupinfo = True
-    freq=50       # higher freq has lower duty resolution. esp32 can go from 1-40000 (40MHz crystal oscillator) 
-    neutral = 75  # initialize to neutral position, 75=1.5mSec at 50Hz. (75/50=1.5ms or 1.5ms/20ms period = 7.5% duty cycle)
-    for i, pin in enumerate(pinlist):
-        servoArr.append(PWM(Pin(pin),freq))
-        servoArr[i].duty(neutral)
-        pinsummary.append(pin)
-    if setupinfo: print('Servo:{0}'.format(servoArr))
-    return servoArr 
-
 def main():
     global pinsummary
-    global debugmqtt                                  # Used for debugging mqtt messages
     global mqtt_servoID, mqtt_servo_duty     # Servo variables used in mqtt on_message
-    global device, outgoingD                          # Containers setup in 'create' functions and used for Publishing mqtt
-    
-    #===== SETUP MQTT/DEBUG VARIABLES ============#
-    # Setup mqtt variables (topics and data containers) used in on_message, main loop, and publishing
-    # Further setup of variables is completed in specific 'create_device' functions
-    mqtt_setup('10.0.0.115')
-    device = []    # mqtt lvl2 topic category and '.appended' in create functions
-    outgoingD = {} # container used for publishing mqtt data
-    
-    # umqttsimple requires topics to be byte format. For string.join to work on topics, all items must be the same, bytes.
+    global deviceD                           # Containers setup in 'create' functions and used for Publishing mqtt
+    global MQTT_SERVER, MQTT_USER, MQTT_PASSWORD, MQTT_CLIENT_ID, mqtt_client, MQTT_PUB_TOPIC, ESPID, SUBLVL1
+
+    '''
+    ulogging from https://github.com/peterhinch
+    CRITICAL = 50
+    ERROR    = 40
+    WARNING  = 30
+    INFO     = 20
+    DEBUG    = 10
+    NOTSET   = 0
+    '''
+    ulogging.basicConfig(level=10)
+
+    mqtt_setup('10.0.0.115')  # Setup mqtt variables (topics and data containers) used in on_message, main loop, and publishing
+
+    deviceD = {}       # Primary container for storing all topics and data
+
+    # umqttsimple requires topics to be byte (b') format. For string.join to work on topics, all items must be the same, bytes.
     ESPID = b'/esp32A'  # Specific MQTT_PUB_TOPICS created at time of publishing using string.join (specifically lvl2.join)
-    MQTT_PUB_TOPIC = [b'esp2nred/', ESPID]
-  
-    # Frequency (ms) to check for msg
-    on_msg_timer_ms = 100
     
-    debugmqtt = False        # Turn ON to print mqtt msg traffic.
-    
-    #=== SETUP DEVICES ===#
-    # Boot fails if pin 12 is pulled high
-    # Pins 34-39 are input only and do not have internal pull-up resistors. Good for ADC
-    # Items that are sent as part of mqtt topic will be binary (b'item)
     pinsummary = []
     
+    servo = []
     servopins = [22, 23]
-    servo = create_servo(servopins)
+    MQTT_SUB_TOPIC.append(SUBLVL1 + b'/servoZCMD/+') # Topic to monitor for new servo commands, duty, from mqtt nodered
+    mqtt_servoID = 0     # container for mqtt servo ID
+    mqtt_servo_duty = 0  # container for mqtt servo duty
+    freq=50       # higher freq has lower duty resolution. esp32 can go from 1-40000 (40MHz crystal oscillator) 
+    neutral = 75  # initialize to neutral position, 75=1.5mSec at 50Hz. (75/50=1.5ms or 1.5ms/20ms period = 7.5% duty cycle)
+    for i, pin in enumerate(servopins):
+        servo.append(PWM(Pin(pin),freq))
+        servo[i].duty(neutral)
+        pinsummary.append(pin)
+    ulogging.info('Servo:{0}'.format(servo))
 
-    print('Pins in use:{0}'.format(sorted(pinsummary)))
+    ulogging.info('Pins in use:{0}'.format(sorted(pinsummary)))
     #==========#
     # Connect and create the client
     try:
@@ -125,8 +116,9 @@ def main():
     # MQTT setup is successful, publish status msg and flash on-board led
     mqtt_client.publish(b'status'.join(MQTT_PUB_TOPIC), b'esp32 connected, entering main loop')
     # Initialize flags and timers
-    checkmsgs = False
+    on_msg_timer_ms = 100    # Frequency (ms) to check for msg
     t0onmsg_ms = utime.ticks_ms()
+    checkmsgs = False
     
     while True:
         try:
@@ -134,12 +126,12 @@ def main():
                 checkmsgs = True
                 t0onmsg_ms = utime.ticks_ms()
             
-            servo[mqtt_servoID].duty(mqtt_servo_duty) # Servo commands
-            
             if checkmsgs:
                 mqtt_client.check_msg()
                 checkmsgs = False
                 
+            servo[mqtt_servoID].duty(mqtt_servo_duty) # Servo commands
+
         except OSError as e:
             mqtt_reset()
 

@@ -86,13 +86,13 @@ def main():
 
     deviceD = {}       # Primary container for storing all topics and data
 
-    mqtt_servoID = 0
-    numservos = 16
-    i2caddr = 0x40
+    mqtt_servoID = 0   # Initialize. Updated in mqtt on_message
+    numservos = 16     # Number of servo channels to pass to ServoKit. Must be 8 or 16.
+    i2caddr = 0x40     # I2C address on PCA9685 board
     deviceD['servoAngle'] = [90]*numservos   # Initialize at 90°
     MQTT_SUB_TOPIC.append(f"{SUBLVL1}/servoZCMD/+")
-    pca9685 = ServoKit(address=i2caddr, channels=numservos)
-        # Channels=8 or 16, i2c=None, address=64 (0x40), reference_clock_speed=25000000, frequency=50) 50Hz = 20ms period
+                      # Other arguments reference_clock_speed=25000000, frequency=50) 50Hz = 20ms period
+    pca9685 = ServoKit(address=i2caddr, channels=numservos)  
     logging.info(('Servo PCA9685 Kit on address:{0} {1}'.format(i2caddr, pca9685)))
 
     #==== START/BIND MQTT FUNCTIONS ====#

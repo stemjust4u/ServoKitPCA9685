@@ -143,6 +143,9 @@ MQTT_SUB_TOPIC1 = 'device/servo'__
 ### __esp32__  
 /upython/main.py (and boot, umqttsimple files)
 
+>Boot fails if pin 12 is pulled high  
+Pins 34-39 are input only and do not have internal pull-up resistors. Good for ADC  
+
 # Node Red
 [Link to MQTT-Node-Red Setup](https://stemjust4u.com/mqtt-influxdb-nodered-grafana)  
 ![Node red](images/nodered-servo-gui.gif#5rad)
