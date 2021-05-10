@@ -29,7 +29,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     """on message callback will receive messages from the server/broker. Must be subscribed to the topic in on_connect"""
     global deviceD, MQTT_REGEX
-    global mqtt_servoID
+    global mqtt_servoID, mqtt_servoAngle
     logging.debug("Received: {0} with payload: {1}".format(msg.topic, str(msg.payload)))
     msgmatch = re.match(MQTT_REGEX, msg.topic)   # Check for match to subscribed topics
     if msgmatch:
@@ -37,7 +37,7 @@ def on_message(client, userdata, msg):
         mqtt_topic = [msgmatch.group(0), msgmatch.group(1), msgmatch.group(2), type(mqtt_payload)] # breaks msg topic into groups - group/group1/group2
         if mqtt_topic[1] == 'servoZCMD':
             mqtt_servoID = int(mqtt_topic[2])
-            deviceD['servoAngle'][mqtt_servoID] = int(mqtt_payload)  # Set the servo angle from mqtt payload
+            mqtt_servoAngle = int(mqtt_payload)  # Set the servo angle from mqtt payload
 
 def on_publish(client, userdata, mid):
     """on publish will send data to broker"""
@@ -68,9 +68,8 @@ def mqtt_setup(IPaddress):
                                               # * could also be used for last group and then a lvl1/lvl2 topic would also be matched
 
 def main():
-    global pinsummary
-    global debugmqtt                          # Used for debugging mqtt messages
-    global mqtt_servoID, deviceD, mqtt_outgoingD   # Servo variables
+    global mqtt_servoID, mqtt_servoAngle  # Servo variables
+    global deviceD  # Main dictionary that holds information on devices setup
     global MQTT_SERVER, MQTT_USER, MQTT_PASSWORD, MQTT_CLIENT_ID, mqtt_client, MQTT_PUB_TOPIC
 
     #basicConfig root logger
@@ -86,9 +85,10 @@ def main():
 
     deviceD = {}       # Primary container for storing all topics and data
 
-    mqtt_servoID = 0   # Initialize. Updated in mqtt on_message
+    servoID, mqtt_servoID = 0, 0   # Initialize. Updated in mqtt on_message
     numservos = 16     # Number of servo channels to pass to ServoKit. Must be 8 or 16.
     i2caddr = 0x40     # I2C address on PCA9685 board
+    mqtt_servoAngle = 90
     deviceD['servoAngle'] = [90]*numservos   # Initialize at 90°
     MQTT_SUB_TOPIC.append(f"{SUBLVL1}/servoZCMD/+")
                       # Other arguments reference_clock_speed=25000000, frequency=50) 50Hz = 20ms period
@@ -119,7 +119,9 @@ def main():
 
     # MAIN LOOP
     while True:
-        pca9685.servo[mqtt_servoID].angle = deviceD['servoAngle'][mqtt_servoID] # Set the servo angle from mqtt
+        servoID = mqtt_servoID                                      # Servo commands coming from mqtt
+        deviceD['servoAngle'][servoID] = mqtt_servoAngle            # But could change data source from something other than mqtt
+        pca9685.servo[servoID].angle = deviceD['servoAngle'][servoID] # Set the servo angle from mqtt
  
 if __name__ == "__main__":
     # Run main loop            
