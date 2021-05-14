@@ -1,5 +1,6 @@
-from boot import MAIN_FILE_LOGGING, MAIN_FILE_MODE, MAIN_FILE_NAME, logfiles
+from boot import MAIN_FILE_LOGGING, MAIN_FILE_MODE, MAIN_FILE_NAME
 import sys, uos
+from mytools import pcolor
 from machine import Timer
 
 CRITICAL = 50
@@ -15,6 +16,15 @@ _level_dict = {
     WARNING: "WARN",
     INFO: "INFO",
     DEBUG: "DEBUG",
+}
+
+_color = {
+    50: pcolor.DRED,
+    40: pcolor.WOR,
+    30: pcolor.YELLOW,
+    20: pcolor.BOW,
+    10: pcolor.DBLUE,
+    0:  pcolor.BOLD
 }
 
 _stream = sys.stderr
@@ -71,13 +81,14 @@ class Logger:
                     else:
                         self.f.write(msg % args)
             elif self.fileopen and not self.autoclose:          # If single module writing to file then leave file open for faster writes. Doesn't work with multiple files
-                self.f.write("%s:%s:" % (self._level_str(level), self.name))
+                self.f.write("%s,%s," % (self._level_str(level), self.name))
                 if not args:
                     self.f.write("{0}\n".format(msg))
                 else:
                     self.f.write(msg % args)
             else:
-                _stream.write("%s:%s:" % (self._level_str(level), self.name))
+                #_stream.write("%s:%s:" % (self._level_str(level), self.name))
+                _stream.write("{0}{1}{2}:{3}:".format(_color[level], self._level_str(level), pcolor.ENDC, self.name))
                 if not args:
                     print(msg, file=_stream)
                 else:
