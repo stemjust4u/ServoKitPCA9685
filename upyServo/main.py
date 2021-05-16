@@ -136,7 +136,7 @@ def setup_device(device, lvl2, publvl3, data_keys):
             #  FileMode == 1 # console output (no log file)
             #  FileMode == 2 # write to log file (no console output)
 logfile = __name__ + '.log'
-main_logger = setup_logging(logfile, 'custom', __name__, 1, True, logger_log_level=20)
+main_logger = setup_logging(logfile, 'custom', __name__, 1, True, logger_log_level=10)
 main_logger.info(main_logger)
 
 main_logger.info('localtime: {0}'.format(localdate(utime.localtime())))
