@@ -170,7 +170,6 @@ for i, pin in enumerate(servopins):
     servo[i].duty(75)              # initialize to neutral position, 75=1.5mSec at 50Hz. (75/50=1.5ms or 1.5ms/20ms period = 7.5% duty cycle)
     deviceD[device].append(75)     
     pinsummary.append(pin)
-    #utime.sleep_ms(1000)
     t.start()
     while servo[i].duty() != 75:
         servo[i].duty(75)
