@@ -103,7 +103,7 @@ def setup_device(device, lvl2, publvl3, data_keys):
         deviceD[device] = {}
         deviceD[device]['data'] = {}
         deviceD[device]['lvl2'] = lvl2 # Sub/Pub lvl2 in topics. Does not have to be unique, can piggy-back on another device lvl2
-        topic = MQTT_SUB_LVL1 + "/" + deviceD[device]['lvl2'] + "ZCMD/+"
+        topic = MQTT_SUB_LVL1 + b"/" + deviceD[device]['lvl2'] + b"ZCMD/+"
         if topic not in MQTT_SUB_TOPIC:
             MQTT_SUB_TOPIC.append(topic)
             for key in data_keys:
@@ -114,7 +114,7 @@ def setup_device(device, lvl2, publvl3, data_keys):
                     if deviceD[item]['data'].get(key) != None:
                         main_logger.warning("**DUPLICATE WARNING" + device + " and " + item + " are both publishing " + key + " on " + topic)
                 deviceD[device]['data'][key] = 0
-        deviceD[device]['pubtopic'] = MQTT_PUB_LVL1 + lvl2 + '/' + publvl3
+        deviceD[device]['pubtopic'] = MQTT_PUB_LVL1 + lvl2 + b'/' + publvl3
         deviceD[device]['send'] = False
         printcolor = not printcolor # change color of every other print statement
         if printcolor: 
@@ -156,8 +156,8 @@ t = Timer()
 # Boot fails if pin 12 is pulled high
 # Pins 34-39 are input only and do not have internal pull-up resistors. Good for ADC
 device = 'servoDuty'
-lvl2 = 'servo'
-publvl3 = ESPID + ""
+lvl2 = b'servo'
+publvl3 = ESPID + b""
 data_keys = ['NA']             # Servo currently does not publish any data back to mqtt
 setup_device(device, lvl2, publvl3, data_keys)
 servo = []
