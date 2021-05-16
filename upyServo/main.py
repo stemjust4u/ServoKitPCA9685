@@ -164,7 +164,7 @@ servo = []
 servopins = [22, 23]
 servoID, mqtt_servoID = 0, 0   # Initialize. Updated in mqtt on_message
 mqtt_servo_duty = 0  # container for mqtt servo duty
-deviceD['servoDuty'] = []
+deviceD[device] = []
 for i, pin in enumerate(servopins):
     servo.append(PWM(Pin(pin),50)) # higher freq has lower duty resolution. esp32 can go from 1-40000 (40MHz crystal oscillator)
     servo[i].duty(75)              # initialize to neutral position, 75=1.5mSec at 50Hz. (75/50=1.5ms or 1.5ms/20ms period = 7.5% duty cycle)
