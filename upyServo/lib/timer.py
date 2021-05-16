@@ -50,4 +50,7 @@ class Timer:
             logger.error("no timer running. use .start() to create one")
             return -1
         else:
-            return utime.ticks_diff(utime.ticks_us(), self._start_time)
+            _end_time = utime.ticks_us()
+            elapsed = utime.ticks_diff(_end_time, self._start_time)
+            self._start_time = None
+            return elapsed

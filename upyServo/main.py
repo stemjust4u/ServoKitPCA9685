@@ -133,10 +133,10 @@ def setup_device(device, lvl2, publvl3, data_keys):
 # If wanting modules to each write to individual files then make sure autoclose=True (safe with file open/close)
 # If wanting a single module to quickly write to a log file then only enable one module and set autoclose=False
 # If logger_type == 'custom'  then access to modes below
-            #  FileMode == 1 # no log file
-            #  FileMode == 2 # write to log file
+            #  FileMode == 1 # console output (no log file)
+            #  FileMode == 2 # write to log file (no console output)
 logfile = __name__ + '.log'
-main_logger = setup_logging(logfile, 'custom', __name__, 1, True, logger_log_level=10)
+main_logger = setup_logging(logfile, 'custom', __name__, 1, True, logger_log_level=20)
 main_logger.info(main_logger)
 
 main_logger.info('localtime: {0}'.format(localdate(utime.localtime())))
@@ -150,7 +150,11 @@ mqtt_setup('10.0.0.115')  # Setup mqtt variables (topics and data containers) us
 deviceD = {}       # Primary container for storing all topics and data
 printcolor = True
 pinsummary = []
+t = Timer()
 
+#==== HARDWARE SETUP ======#
+# Boot fails if pin 12 is pulled high
+# Pins 34-39 are input only and do not have internal pull-up resistors. Good for ADC
 device = 'servoDuty'
 lvl2 = 'servo'
 publvl3 = ESPID + ""
@@ -163,11 +167,15 @@ mqtt_servo_duty = 0  # container for mqtt servo duty
 deviceD['servoDuty'] = []
 for i, pin in enumerate(servopins):
     servo.append(PWM(Pin(pin),50)) # higher freq has lower duty resolution. esp32 can go from 1-40000 (40MHz crystal oscillator)
-    servo[i].duty(75)         # initialize to neutral position, 75=1.5mSec at 50Hz. (75/50=1.5ms or 1.5ms/20ms period = 7.5% duty cycle)
-    main_logger.debug("i:{0} pin:{1} duty".format(i, pin))
+    servo[i].duty(75)              # initialize to neutral position, 75=1.5mSec at 50Hz. (75/50=1.5ms or 1.5ms/20ms period = 7.5% duty cycle)
     deviceD[device].append(75)     
     pinsummary.append(pin)
-main_logger.info('Servo:{0}'.format(servo))
+    #utime.sleep_ms(1000)
+    t.start()
+    while servo[i].duty() != 75:
+        servo[i].duty(75)
+    elapsed = t.stop()
+    main_logger.info('Servo:{0} initialized in {1:.2f} msec'.format(servo[i], elapsed/1000))
 
 main_logger.info('Pins in use:{0}'.format(sorted(pinsummary)))
 #==========#
@@ -191,7 +199,6 @@ while True:
         
         if checkmsgs:
             mqtt_client.check_msg()
-            main_logger.debug("Servo:{0} Duty:{1}".format(servoID, deviceD['servoDuty'][servoID]))
             checkmsgs = False
         
         servoID = mqtt_servoID                             # Servo commands coming from mqtt but could change it to a difference source
