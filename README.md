@@ -1,11 +1,11 @@
 <link rel="stylesheet" href="./images/sj4u.css"></link>
 
-# [STEM Just 4 U Home Page](https://stemjust4u.com/)
-## This project connects a small SG90 servo with both the esp32 and a Pi0 
+## Outline  
+This project connects a small SG90 servo with both the esp32 and a Pi0 
 
 The Pi0 setup will include a PCA9685 16-Channel 12-bit PWM Servo Driver and I2C interface. The esp32 will use its built-in PWM to control the servo. It's possible to use the Pi0's PWM pins to control the servo but there will likely be significant jitter. I had to use the PCA9685 servo driver on the Pi0 setup to make it useable. To communicate instructions, servo angle, to the Pi0/esp32 we will use mqtt/node-red.
 
-[Link to MQTT Project Web Site](https://stemjust4u.com/ServoKitPCA9685)  
+[Link to General Workflow with MQTT, NodeRed, Hardware, Coding Setup](https://stemjust4u.github.io/ref/data-analysis/workflow/)
 
 ![Servos](images/pca9685-fritzing.png#200x-150y-5rad)
 ![Servos](images/RPi-servo.png#200x-150y-5rad)
@@ -147,11 +147,7 @@ MQTT_SUB_TOPIC1 = 'device/servo'__
 Pins 34-39 are input only and do not have internal pull-up resistors. Good for ADC  
 
 # Node Red
-[Link to MQTT-Node-Red Setup](https://stemjust4u.com/mqtt-influxdb-nodered-grafana)  
 ![Node red](images/nodered-servo-gui.gif#5rad)
 ![Node red](images/node-red-Pi0.png)
 The esp32 takes a duty value for input so a degree-to-duty conversion is made before publishing.
 ![Node red](images/node-red-esp32.png)
-
-The node-red flows can be found in github node-red folder or at the bottom of the project web site (import to node red from clipboard)   
-[Link to MQTT Project Web Site](https://stemjust4u.com/ServoKitPCA9685) 
